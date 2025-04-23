@@ -1,0 +1,72 @@
+﻿@page "/movies"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using BlazorWebAppMovies.Models
+@using BlazorWebAppMovies.Data
+@using System.Diagnostics
+@implements IAsyncDisposable
+@inject IDbContextFactory<BlazorWebAppMovies.Data.BlazorWebAppMoviesContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+<div>
+    <form  action="/movies" data-enhance data-permanent>
+        <input type="search" name="TitleFilter" placeholder="Search by title" />
+        <input type="submit" value="Search" />
+    </form>
+
+</div>
+                                        
+
+
+<h1>Index</h1>
+
+<p>
+    <a href="movies/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="FilteredMovies">
+    <PropertyColumn Property="movie => movie.Title" />
+    <PropertyColumn Property="movie => movie.ReleaseDate" />
+    <PropertyColumn Property="movie => movie.Genre" />
+    <PropertyColumn Property="movie => movie.Price" />
+    <PropertyColumn Property="movie => movie.Rating" />
+
+    <TemplateColumn Context="movie">
+        <a href="@($"movies/edit?id={movie.Id}")">Edit</a> |
+        <a href="@($"movies/details?id={movie.Id}")">Details</a> |
+        <a href="@($"movies/delete?id={movie.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private BlazorWebAppMoviesContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+
+    [SupplyParameterFromQuery]
+    private string? TitleFilter{ get; set; }
+
+
+
+    private IQueryable<Movie> FilteredMovies
+    {
+        get
+        {  
+            // Debug.WriteLine("TitleFilter: " + TitleFilter);
+            // Debug.WriteLine("Context: "+context);
+            return string.IsNullOrEmpty(TitleFilter)? context.Movie : context.Movie.Where(m => m.Title.Contains(TitleFilter));
+
+        }
+    }
+    // string.IsNullOrEmpty(TitleFilter)?
+    // context.Movie : context.Movie.Where(m => m.Title.Contains(TitleFilter));
+
+
+
+
+}
